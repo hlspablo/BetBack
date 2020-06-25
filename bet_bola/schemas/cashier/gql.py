@@ -24,5 +24,5 @@ class CashierQuery(graphene.ObjectType):
         return resolver.get_seller_cashier()
 
     def resolve_sellers_cashier(self, info, **kwargs):
-        resolver = CashierResolver(info.context, **kwargs)
+        resolver = SellerResolver(info.context, **kwargs)
         return resolver.get_sellers_cashier()

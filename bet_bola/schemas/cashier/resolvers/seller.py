@@ -5,9 +5,9 @@ from ticket.models import Ticket
 from django.db.models import Q, Sum
 from datetime import datetime
 from utils import timezone as tzlocal
-from history.models import CashierCloseSeller
 from .base import BaseResolver
 from utils.utils import get_last_monay_as_date
+from .utils import get_last_closed_cashier_seller
 
 class SellerResolver(BaseResolver):
     queryset = Seller.objects.filter(is_active=True)
@@ -16,14 +16,16 @@ class SellerResolver(BaseResolver):
         return self.get_queryset().get(pk=self.kwargs.get('seller_id'))
 
     def get_sellers_cashier(self):
+        ''' GET SELLERS CASHIER METHOD '''
+
         self.entry_total = dec(0)
         self.incoming_total = dec(0)
         self.comission_total = dec(0)
-        self.outgoing_total = dec(0)
+        self.outgoing_sum_total = dec(0)
+        self.outgoing_total_sum_total = dec(0)
         self.bonus_of_won_total = dec(0)
         self.open_outgoing_total = dec(0)
         self.open_tickets_count_total = 0
-        self.outgoing_total_total = dec(0)
         self.profit_total = dec(0)
         self.profit_wost_case_total = dec(0)
 
@@ -31,39 +33,29 @@ class SellerResolver(BaseResolver):
         self.sellers = []
 
         for seller in sellers:
+            self.username = seller.username
             self.incoming = dec(0)
             self.comission = dec(0)
             self.outgoing = dec(0)
-            self.bonus_of_won = dec(0)
+            self.outgoing_total = dec(0)
             self.open_outgoing = dec(0)
-            self.entry = dec(0)
             self.open_tickets_count = 0
+            self.bonus_of_won = dec(0)
+            self.entry = dec(0)
 
             tickets = Ticket.objects.filter(payment__status=2, payment__who_paid__pk=seller.pk).exclude(Q(status__in=[0,5,6]) | Q(available=False))
             open_tickets = Ticket.objects.filter(status=0, payment__status=2, payment__who_paid__pk=seller.pk).exclude(available=False)
         
-            start_creation_date = self.kwargs.get('start_date') if self.kwargs.get('start_date') else None
-            end_creation_date = self.kwargs.get('end_date') if self.kwargs.get('end_date') else None
+            start_date = datetime.strptime(self.kwargs.get('start_date'), '%d/%m/%Y').strftime('%Y-%m-%d') if self.kwargs.get('start_date') else get_last_monay_as_date()
+            end_date = datetime.strptime(self.kwargs.get('end_date'), '%d/%m/%Y').strftime('%Y-%m-%d') if self.kwargs.get('end_date') else tzlocal.now()
 
-            if start_creation_date:
-                start_creation_date = datetime.datetime.strptime(start_creation_date, '%d/%m/%Y').strftime('%Y-%m-%d')
-                tickets = tickets.filter(creation_date__date__gte=start_creation_date)
-                open_tickets = open_tickets.filter(creation_date__date__gte=start_creation_date)
-            else:
-                last_monday = get_last_monay_as_date()
-                tickets = tickets.filter(creation_date__date__gte=last_monday)
-                open_tickets = open_tickets.filter(creation_date__date__gte=last_monday)
+            tickets = tickets.filter(creation_date__date__gte=start_date, creation_date__date__lte=end_date)
+            open_tickets = open_tickets.filter(creation_date__date__gte=start_date, creation_date__date__lte=end_date)
             
-            if end_creation_date:
-                end_creation_date = datetime.datetime.strptime(end_creation_date, '%d/%m/%Y').strftime('%Y-%m-%d')
-                tickets = tickets.filter(creation_date__date__lte=end_creation_date)
-                open_tickets = open_tickets.filter(creation_date__date__lte=end_creation_date)
-            else:
-                end_creation_date = tzlocal.now()
-            
-            self.entry = seller.my_entries.filter(creation_date__date__gte=start_creation_date, creation_date__date__lte=end_creation_date)\
+            entry = seller.my_entries.filter(creation_date__date__gte=start_date, creation_date__date__lte=end_date)\
                 .aggregate(Sum('value'))['value__sum']
             
+            self.entry = entry if entry else dec(0)
             self.open_tickets_count = open_tickets.count()
             
             won_bonus_enabled = seller.my_store.my_configuration.bonus_won_ticket
@@ -109,29 +101,29 @@ class SellerResolver(BaseResolver):
 
 
             self.sellers.append({
+                'username': self.username,
                 'entry': self.entry if self.entry else dec(0),
                 'incoming': self.incoming,
                 'comission':  self.comission,
                 'outgoing': self.outgoing,
-                'bonus_of_won': self.bonus_of_won,
-                'open_outgoing': self.open_outgoing,
-                'open_tickets_count': self.open_tickets_count,
                 'outgoing_total': self.outgoing_total,
+                'open_outgoing': self.open_outgoing,
+                'bonus_of_won': self.bonus_of_won,
+                'open_tickets_count': self.open_tickets_count,
                 'profit': self.profit,
                 'profit_wost_case': self.profit_wost_case,
-                'last_closed_cashier': CashierCloseSeller.objects.filter(seller=seller).order_by('-date')\
-                    .first().date.strftime("%d/%m/%Y %H:%M:%S") if CashierCloseSeller\
-                    .objects.filter(seller=seller).count() > 0 else "Sem Registro"
+                'last_closed_cashier': get_last_closed_cashier_seller(seller)
             })
             
             # All total Calculations
-            self.entry_total += self.entry if self.entry else dec(0)
+            self.entry_total += self.entry
             self.incoming_total += self.incoming
             self.comission_total += self.comission
-            self.bonus_of_won_total += self.bonus_of_won
-            self.open_outgoing_total += self.open_outgoing
+            self.outgoing_sum_total += self.outgoing
+            self.outgoing_total_sum_total += self.outgoing_total
             self.open_tickets_count_total += self.open_tickets_count
-            self.outgoing_total_total += self.outgoing_total
+            self.open_outgoing_total += self.open_outgoing
+            self.bonus_of_won_total += self.bonus_of_won
             self.profit_total += self.profit
             self.profit_wost_case_total += self.profit_wost_case
 
@@ -140,10 +132,11 @@ class SellerResolver(BaseResolver):
             'entry_total': self.entry_total,
             'incoming_total': self.incoming_total,
             'comission_total': self.comission_total,
-            'bonus_of_won_total': self.bonus_of_won_total,
+            'outgoing_sum_total': self.outgoing_sum_total,
+            'outgoing_total_sum_total': self.outgoing_total_sum_total,
             'open_outgoing_total': self.open_outgoing_total,
+            'bonus_of_won_total': self.bonus_of_won_total,
             'open_tickets_count_total': self.open_tickets_count_total,
-            'outgoing_total_total': self.outgoing_total_total,
             'profit_total': self.profit_total,
             'profit_wost_case_total': self.profit_wost_case_total,
             'sellers': self.sellers
@@ -151,7 +144,7 @@ class SellerResolver(BaseResolver):
 
 
     def get_seller_cashier(self):
-        ''' GET_SELLER CASHIER METHOD '''
+        ''' GET_SELLER_CASHIER METHOD '''
 
         seller = self.get_seller()
         self.username = seller.username

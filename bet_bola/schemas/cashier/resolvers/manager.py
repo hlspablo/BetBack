@@ -17,7 +17,6 @@ class ManagerResolver(BaseResolver):
     def get_manager(self):
         return self.get_queryset().get(pk=self.kwargs.get('manager_id'))
 
-
     def get_managers_cashier(self):
         ''' Method responsible for getting MANAGERS details on admin page '''
         self.incoming_total = dec(0)

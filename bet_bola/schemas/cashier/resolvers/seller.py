@@ -3,21 +3,19 @@ from user.models import Seller
 from core.models import CotationCopy
 from ticket.models import Ticket
 from django.db.models import Q, Sum
-import datetime
+from datetime import datetime
 from utils import timezone as tzlocal
 from history.models import CashierCloseSeller
+from .base import BaseResolver
+from utils.utils import get_last_monay_as_date
 
-class CashierResolver():
-    def __init__(self, request, **kwargs):
-        self.request = request
-        self.kwargs = kwargs
+class SellerResolver(BaseResolver):
+    queryset = Seller.objects.filter(is_active=True)
 
-    def get_queryset(self):
-        self.queryset = Seller.objects.filter(is_active=True)
-        return self.queryset
+    def get_seller(self):
+        return self.get_queryset().get(pk=self.kwargs.get('seller_id'))
 
     def get_sellers_cashier(self):
-
         self.entry_total = dec(0)
         self.incoming_total = dec(0)
         self.comission_total = dec(0)
@@ -84,8 +82,8 @@ class CashierResolver():
                 self.incoming += ticket.bet_value
 
                 cotations_count = CotationCopy.objects.filter(active=True, ticket__pk=ticket.pk).count()
-                comission_temp = seller_key.get(cotations_count, seller_comission.sixth_more) * ticket.bet_value / 100
-                self.comission += comission_temp
+                ticket_comission = seller_key.get(cotations_count, seller_comission.sixth_more) * ticket.bet_value / 100
+                self.comission += ticket_comission
 
                 self.open_outgoing += ticket.reward.value
 
@@ -94,8 +92,8 @@ class CashierResolver():
                 self.incoming += ticket.bet_value
 
                 cotations_count = CotationCopy.objects.filter(active=True, ticket__pk=ticket.pk).count()
-                comission_temp = seller_key.get(cotations_count, seller_comission.sixth_more) * ticket.bet_value / 100
-                self.comission += comission_temp
+                ticket_comission = seller_key.get(cotations_count, seller_comission.sixth_more) * ticket.bet_value / 100
+                self.comission += ticket_comission
 
                 if ticket.status in [2,4]:
                     self.outgoing += ticket.reward.value                
@@ -153,42 +151,33 @@ class CashierResolver():
 
 
     def get_seller_cashier(self):
-        seller = self.get_queryset()
+        ''' GET_SELLER CASHIER METHOD '''
 
+        seller = self.get_seller()
+        self.username = seller.username
         self.incoming = dec(0)
         self.comission = dec(0)
         self.outgoing = dec(0)
-        self.bonus_of_won = dec(0)
+        self.outgoing_total = dec(0)
         self.open_outgoing = dec(0)
-        self.entry = dec(0)
         self.open_tickets_count = 0
+        self.bonus_of_won = dec(0)
+        self.entry = dec(0)
         self.tickets = []
 
         tickets = Ticket.objects.filter(payment__status=2, payment__who_paid__pk=seller.pk).exclude(Q(status__in=[0,5,6]) | Q(available=False))
         open_tickets = Ticket.objects.filter(status=0, payment__status=2, payment__who_paid__pk=seller.pk).exclude(available=False)
-    
-        start_creation_date = self.kwargs.get('start_date') if self.kwargs.get('start_date') else None
-        end_creation_date = self.kwargs.get('end_date') if self.kwargs.get('end_date') else None
+        
+        start_date = datetime.strptime(self.kwargs.get('start_date'), '%d/%m/%Y').strftime('%Y-%m-%d') if self.kwargs.get('start_date') else get_last_monay_as_date()
+        end_date = datetime.strptime(self.kwargs.get('end_date'), '%d/%m/%Y').strftime('%Y-%m-%d') if self.kwargs.get('end_date') else tzlocal.now()
 
-        if start_creation_date:
-            start_creation_date = datetime.datetime.strptime(start_creation_date, '%d/%m/%Y').strftime('%Y-%m-%d')
-            tickets = tickets.filter(creation_date__date__gte=start_creation_date)
-            open_tickets = open_tickets.filter(creation_date__date__gte=start_creation_date)
-        else:
-            last_monday = get_last_monay_as_date()
-            tickets = tickets.filter(creation_date__date__gte=last_monday)
-            open_tickets = open_tickets.filter(creation_date__date__gte=last_monday)
+        tickets = tickets.filter(creation_date__date__gte=start_date, creation_date__date__lte=end_date)
+        open_tickets = open_tickets.filter(creation_date__date__gte=start_date, creation_date__date__lte=end_date)
         
-        if end_creation_date:
-            end_creation_date = datetime.datetime.strptime(end_creation_date, '%d/%m/%Y').strftime('%Y-%m-%d')
-            tickets = tickets.filter(creation_date__date__lte=end_creation_date)
-            open_tickets = open_tickets.filter(creation_date__date__lte=end_creation_date)
-        else:
-            end_creation_date = tzlocal.now()
-        
-        self.entry = seller.my_entries.filter(creation_date__date__gte=start_creation_date, creation_date__date__lte=end_creation_date)\
+        entry = seller.my_entries.filter(creation_date__date__gte=start_date, creation_date__date__lte=end_date)\
             .aggregate(Sum('value'))['value__sum']
         
+        self.entry = entry if entry else dec(0)
         self.open_tickets_count = open_tickets.count()
         
         won_bonus_enabled = seller.my_store.my_configuration.bonus_won_ticket
@@ -207,15 +196,15 @@ class CashierResolver():
             self.incoming += ticket.bet_value
 
             cotations_count = CotationCopy.objects.filter(active=True, ticket__pk=ticket.pk).count()
-            comission_temp = seller_key.get(cotations_count, seller_comission.sixth_more) * ticket.bet_value / 100
-            self.comission += comission_temp
+            ticket_comission = seller_key.get(cotations_count, seller_comission.sixth_more) * ticket.bet_value / 100
+            self.comission += ticket_comission
 
             self.open_outgoing += ticket.reward.value
 
             self.tickets.append({
                 'ticket_id': ticket.ticket_id,
                 'status': ticket.get_status_display(),
-                'comission': comission_temp,
+                'comission': ticket_comission,
                 'bonus_of_won': dec(0),
                 'bet_value': ticket.bet_value,
                 'cotations_count': cotations_count,
@@ -228,13 +217,13 @@ class CashierResolver():
             self.incoming += ticket.bet_value
 
             cotations_count = CotationCopy.objects.filter(active=True, ticket__pk=ticket.pk).count()
-            comission_temp = seller_key.get(cotations_count, seller_comission.sixth_more) * ticket.bet_value / 100
-            self.comission += comission_temp
+            ticket_comission = seller_key.get(cotations_count, seller_comission.sixth_more) * ticket.bet_value / 100
+            self.comission += ticket_comission
 
             if ticket.status in [2,4]:
                 self.outgoing += ticket.reward.value                
 
-            bonus_by_won = None
+            bonus_by_won = dec(0)
             if won_bonus_enabled:
                 bonus_by_won = ticket.won_bonus()
                 self.bonus_of_won += bonus_by_won
@@ -242,8 +231,8 @@ class CashierResolver():
             self.tickets.append({
                 'ticket_id': ticket.ticket_id,
                 'status': ticket.get_status_display(),
-                'comission': comission_temp,
-                'bonus_of_won': bonus_by_won if bonus_by_won else dec(0),
+                'comission': ticket_comission,
+                'bonus_of_won': bonus_by_won,
                 'bet_value': ticket.bet_value,
                 'cotations_count': cotations_count,
                 'reward': ticket.reward.value,
@@ -255,15 +244,16 @@ class CashierResolver():
         self.profit_wost_case = self.profit - self.open_outgoing
 
         return {
-            'entry': self.entry if self.entry else dec(0),
+            'username': self.username,
+            'entry': self.entry,
             'incoming': self.incoming,
             'comission':  self.comission,
             'outgoing': self.outgoing,
-            'bonus_of_won': self.bonus_of_won,
-            'tickets': self.tickets,
-            'open_outgoing': self.open_outgoing,
-            'open_tickets_count': self.open_tickets_count,
             'outgoing_total': self.outgoing_total,
+            'open_outgoing': self.open_outgoing,
+            'bonus_of_won': self.bonus_of_won,
+            'open_tickets_count': self.open_tickets_count,
             'profit': self.profit,
-            'profit_wost_case': self.profit_wost_case
+            'profit_wost_case': self.profit_wost_case,
+            'tickets': self.tickets
         }

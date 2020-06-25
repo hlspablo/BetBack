@@ -4,7 +4,7 @@ from .types import SellerCashierType, SellersCashierType
 from core.models import Game
 from decimal import Decimal as dec
 import datetime
-from .resolvers.seller import CashierResolver
+from .resolvers.seller import SellerResolver
 
 class CashierQuery(graphene.ObjectType):
     seller_cashier = Field(
@@ -20,7 +20,7 @@ class CashierQuery(graphene.ObjectType):
     )
 
     def resolve_seller_cashier(self, info, **kwargs):
-        resolver = CashierResolver(info.context, **kwargs)
+        resolver = SellerResolver(info.context, **kwargs)
         return resolver.get_seller_cashier()
 
     def resolve_sellers_cashier(self, info, **kwargs):

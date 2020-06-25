@@ -1,6 +1,6 @@
 import graphene
 from graphene import String, Field, List, Int, Date
-from .types import SellerCashierType, SellersCashierType, ManagerCashierType
+from .types import SellerCashierType, SellersCashierType, ManagerCashierType, ManagerOwnerCashierType
 from core.models import Game
 from decimal import Decimal as dec
 import datetime
@@ -21,6 +21,12 @@ class CashierQuery(graphene.ObjectType):
         start_date=String(),
         end_date=String()
     )
+    manager_owner_cashier = Field(
+        ManagerOwnerCashierType, 
+        manager_id=Int(required=True),
+        start_date=String(),
+        end_date=String()
+    )
     sellers_cashier = Field(
         SellersCashierType,
         start_date=String(),
@@ -34,6 +40,10 @@ class CashierQuery(graphene.ObjectType):
     def resolve_manager_cashier(self, info, **kwargs):
         resolver = ManagerResolver(info.context, **kwargs)
         return resolver.get_manager_cashier()
+
+    def resolve_manager_owner_cashier(self, info, **kwargs):
+        resolver = ManagerResolver(info.context, **kwargs)
+        return resolver.get_manager_owner_cashier()
 
     def resolve_sellers_cashier(self, info, **kwargs):
         resolver = SellerResolver(info.context, **kwargs)

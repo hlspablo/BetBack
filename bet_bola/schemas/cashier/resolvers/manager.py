@@ -362,21 +362,22 @@ class ManagerResolver(BaseResolver):
         self.seller_comission_sum = dec(0)
         self.manager_comission_sum = dec(0)
         self.outgoing_sum = dec(0)
-        self.bonus_of_won_sum = dec(0)
+        self.outgoing_total_sum = dec(0)
         self.open_outgoing_sum = dec(0)
+        self.bonus_of_won_sum = dec(0)
         self.entry_sum = dec(0)
         self.open_tickets_count_sum = 0
-        self.open_tickets = []
         self.sellers = []
 
         for seller in sellers:
-            self.seller_username = seller.username
+            self.username = seller.username
             self.incoming = dec(0)
             self.seller_comission = dec(0)
             self.manager_comission = dec(0)
             self.outgoing = dec(0)
-            self.bonus_of_won = dec(0)
+            self.outgoing_total = dec(0)
             self.open_outgoing = dec(0)
+            self.bonus_of_won = dec(0)
             self.entry = dec(0)
             self.open_tickets_count = 0
 
@@ -439,27 +440,28 @@ class ManagerResolver(BaseResolver):
             self.seller_comission_sum += self.seller_comission
             self.manager_comission_sum += self.manager_comission
             self.outgoing_sum += self.outgoing
-            self.bonus_of_won_sum += self.bonus_of_won
             self.open_outgoing_sum += self.open_outgoing
+            self.bonus_of_won_sum += self.bonus_of_won
             self.entry_sum += self.entry
             self.open_tickets_count_sum += self.open_tickets_count
 
-            self.outgoing_total = self.outgoing+ self.seller_comission + self.manager_comission
+            self.outgoing_total = self.outgoing + self.seller_comission + self.manager_comission
             self.profit = self.incoming - self.outgoing_total
             self.profit_wost_case = self.profit - self.open_outgoing
 
             self.sellers.append({
-                'seller': self.seller_username,
+                'username': self.username,
                 'entry': self.entry,
                 'incoming': self.incoming,
                 'comission': self.seller_comission,
                 'outgoing': self.outgoing,
-                'bonus_of_won': self.bonus_of_won,
-                'open_outgoing': self.open_outgoing,
-                'open_tickets_count': self.open_tickets_count,
                 'outgoing_total': self.outgoing_total,
+                'open_outgoing': self.open_outgoing,
+                'bonus_of_won': self.bonus_of_won,
+                'open_tickets_count': self.open_tickets_count,
                 'profit': self.profit,
-                'profit_wost_case': self.profit_wost_case
+                'profit_wost_case': self.profit_wost_case,
+                'last_closed_cashier': get_last_closed_cashier_seller(seller)
             })
 
         self.outgoing_total_sum = self.outgoing_sum + self.seller_comission_sum + self.manager_comission_sum
@@ -468,16 +470,16 @@ class ManagerResolver(BaseResolver):
 
 
         return {
-            'manager': self.manager_username,
+            'username': self.username,
             'entry': self.entry_sum,
             'incoming': self.incoming_sum,
             'seller_comission':  self.seller_comission_sum,
             'manager_comission':  self.manager_comission_sum,
             'outgoing': self.outgoing_sum,
-            'bonus_of_won': self.bonus_of_won_sum,
-            'open_outgoing': self.open_outgoing_sum,
-            'open_tickets_count': self.open_tickets_count_sum,
             'outgoing_total': self.outgoing_total_sum,
+            'open_outgoing': self.open_outgoing_sum,
+            'bonus_of_won': self.bonus_of_won_sum,
+            'open_tickets_count': self.open_tickets_count_sum,
             'profit': self.profit_sum,
             'profit_wost_case': self.profit_wost_case_sum,
             'sellers': self.sellers

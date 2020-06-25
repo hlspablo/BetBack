@@ -45,7 +45,7 @@ class SellersCashierType(ObjectType):
     sellers = List(SellerCashierTypeB)
 
 class ManagerCashierType(ObjectType):
-    manager = String()
+    username = String()
     entry = Decimal()
     incoming = Decimal()
     seller_comission = Decimal()
@@ -58,3 +58,35 @@ class ManagerCashierType(ObjectType):
     profit = Decimal()
     profit_wost_case = Decimal()
     tickets = List(TicketType)
+
+
+class ManagerOwnerCashierType(ObjectType):
+    username = String()
+    entry = Decimal()
+    incoming = Decimal()
+    seller_comission = Decimal()
+    manager_comission = Decimal()
+    outgoing = Decimal()
+    bonus_of_won = Decimal()
+    open_outgoing = Decimal()
+    open_tickets_count = Int()
+    outgoing_total = Decimal()
+    profit = Decimal()
+    profit_wost_case = Decimal()
+    sellers = List(SellerCashierTypeB)
+
+
+class ManagerOwnerCashierType(ObjectType):
+    username = String()
+    entry = Decimal()
+    incoming = Decimal()
+    seller_comission = Decimal()
+    manager_comission = Decimal()
+    outgoing = Decimal()
+    outgoing_total = Decimal()
+    open_outgoing = Decimal()
+    bonus_of_won = Decimal()
+    open_tickets_count = Int()
+    profit = Decimal()
+    profit_wost_case = Decimal()
+    sellers = List(SellerCashierTypeB)

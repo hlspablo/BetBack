@@ -1,0 +1,27 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+requests = "*"
+django = "*"
+"psycopg2-binary" = "*"
+djangorestframework = "*"
+pip = "*"
+django-filter = "*"
+django-cors-headers = "*"
+drf-url-filters = "*"
+djangorestframework-jwt = "*"
+sentry-sdk = "*"
+six = "*"
+python-memcached = "*"
+eventlet = "*"
+django-admin-relation-links = "*"
+graphene-django = "*"
+
+[dev-packages]
+rope = "*"
+
+[requires]
+python_version = "3.6"

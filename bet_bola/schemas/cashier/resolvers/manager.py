@@ -3,10 +3,11 @@ from user.models import Seller, Manager
 from core.models import CotationCopy
 from ticket.models import Ticket
 from django.db.models import Q, Sum
-import datetime
+from datetime import  datetime
 from utils import timezone as tzlocal
-from history.models import CashierCloseManager
 from .base import BaseResolver
+from utils.utils import get_last_monay_as_date
+from .utils import get_last_closed_cashier_seller
 
 class ManagerResolver(BaseResolver):
     queryset = Manager.objects.filter(is_active=True)
@@ -18,7 +19,7 @@ class ManagerResolver(BaseResolver):
         return self.get_queryset().get(pk=self.kwargs.get('manager_id'))
 
     def get_managers_cashier(self):
-        ''' Method responsible for getting MANAGERS details on admin page '''
+        ''' GET MANAGERS CASHIER METHOD '''
         self.incoming_total = dec(0)
         self.seller_comission_total = dec(0)
         self.manager_comission_total = dec(0)
@@ -69,27 +70,15 @@ class ManagerResolver(BaseResolver):
                 tickets = Ticket.objects.filter(payment__status=2, payment__who_paid__pk=seller.pk).exclude(Q(status__in=[0,5,6]) | Q(available=False))
                 open_tickets = Ticket.objects.filter(status=0, payment__status=2, payment__who_paid__pk=seller.pk).exclude(available=False)
             
-                start_creation_date = self.kwargs.get('start_date') if self.kwargs.get('start_date') else None
-                end_creation_date = self.kwargs.get('end_date') if self.kwargs.get('end_date') else None
+                start_date = datetime.strptime(self.kwargs.get('start_date'), '%d/%m/%Y').strftime('%Y-%m-%d') if self.kwargs.get('start_date') else get_last_monay_as_date()
+                end_date = datetime.strptime(self.kwargs.get('end_date'), '%d/%m/%Y').strftime('%Y-%m-%d') if self.kwargs.get('end_date') else tzlocal.now()
 
-                if start_creation_date:
-                    start_creation_date = datetime.datetime.strptime(start_creation_date, '%d/%m/%Y').strftime('%Y-%m-%d')
-                    tickets = tickets.filter(creation_date__date__gte=start_creation_date)
-                    open_tickets = open_tickets.filter(creation_date__date__gte=start_creation_date)
-                else:
-                    last_monday = get_last_monay_as_date()
-                    tickets = tickets.filter(creation_date__date__gte=last_monday)
-                    open_tickets = open_tickets.filter(creation_date__date__gte=last_monday)
+                tickets = tickets.filter(creation_date__date__gte=start_date, creation_date__date__lte=end_date)
+                open_tickets = open_tickets.filter(creation_date__date__gte=start_date, creation_date__date__lte=end_date)
                 
-                if end_creation_date:
-                    end_creation_date = datetime.datetime.strptime(end_creation_date, '%d/%m/%Y').strftime('%Y-%m-%d')
-                    tickets = tickets.filter(creation_date__date__lte=end_creation_date)
-                    open_tickets = open_tickets.filter(creation_date__date__lte=end_creation_date)
-                else:
-                    end_creation_date = tzlocal.now()
-                
-                entry = seller.my_entries.filter(creation_date__date__gte=start_creation_date, creation_date__date__lte=end_creation_date)\
+                entry = seller.my_entries.filter(creation_date__date__gte=start_date, creation_date__date__lte=end_date)\
                     .aggregate(Sum('value'))['value__sum']
+
                 self.entry += entry if entry else dec(0)
                 
                 self.open_tickets_count = open_tickets.count()
@@ -162,9 +151,7 @@ class ManagerResolver(BaseResolver):
                 'outgoing_total': self.outgoing_total_sum,
                 'profit': self.profit_sum,
                 'profit_wost_case': self.profit_wost_case_sum,
-                'last_closed_cashier': CashierCloseManager.objects.filter(manager=manager).order_by('-date')\
-                        .first().date.strftime("%d/%m/%Y %H:%M:%S") if CashierCloseManager\
-                        .objects.filter(manager=manager).count() > 0 else "Sem Registro"
+                'last_closed_cashier': get_last_closed_cashier_manager(manager)
             })
 
             #Acumulate Managers to get General Total
@@ -206,10 +193,10 @@ class ManagerResolver(BaseResolver):
 
 
     def get_manager_cashier(self):
-        ''' Method responsible for getting MANAGER details on admin page '''
+        ''' GET_MANAGER_CASHIER METHOD '''
 
         manager = self.get_manager()
-        self.manager_username = manager.username
+        self.username = manager.username
         manager_comission = manager.comissions
         manager_key = {
             1: manager_comission.simple,
@@ -226,8 +213,9 @@ class ManagerResolver(BaseResolver):
         self.seller_comission_sum = dec(0)
         self.manager_comission_sum = dec(0)
         self.outgoing_sum = dec(0)
-        self.bonus_of_won_sum = dec(0)
+        self.outgoing_total_sum = dec(0)
         self.open_outgoing_sum = dec(0)
+        self.bonus_of_won_sum = dec(0)
         self.entry_sum = dec(0)
         self.open_tickets_count_sum = 0
         self.open_tickets = []
@@ -238,35 +226,24 @@ class ManagerResolver(BaseResolver):
             self.seller_comission = dec(0)
             self.manager_comission = dec(0)
             self.outgoing = dec(0)
-            self.bonus_of_won = dec(0)
+            self.outgoing_total = dec(0)
             self.open_outgoing = dec(0)
+            self.bonus_of_won = dec(0)
             self.entry = dec(0)
             self.open_tickets_count = 0
 
             tickets = Ticket.objects.filter(payment__status=2, payment__who_paid__pk=seller.pk).exclude(Q(status__in=[0,5,6]) | Q(available=False))
             open_tickets = Ticket.objects.filter(status=0, payment__status=2, payment__who_paid__pk=seller.pk).exclude(available=False)
-        
-            start_creation_date = self.kwargs.get('start_date') if self.kwargs.get('start_date') else None
-            end_creation_date = self.kwargs.get('end_date') if self.kwargs.get('end_date') else None
 
-            if start_creation_date:
-                start_creation_date = datetime.datetime.strptime(start_creation_date, '%d/%m/%Y').strftime('%Y-%m-%d')
-                tickets = tickets.filter(creation_date__date__gte=start_creation_date)
-                open_tickets = open_tickets.filter(creation_date__date__gte=start_creation_date)
-            else:
-                last_monday = get_last_monay_as_date()
-                tickets = tickets.filter(creation_date__date__gte=last_monday)
-                open_tickets = open_tickets.filter(creation_date__date__gte=last_monday)
+            start_date = datetime.strptime(self.kwargs.get('start_date'), '%d/%m/%Y').strftime('%Y-%m-%d') if self.kwargs.get('start_date') else get_last_monay_as_date()
+            end_date = datetime.strptime(self.kwargs.get('end_date'), '%d/%m/%Y').strftime('%Y-%m-%d') if self.kwargs.get('end_date') else tzlocal.now()
+
+            tickets = tickets.filter(creation_date__date__gte=start_date, creation_date__date__lte=end_date)
+            open_tickets = open_tickets.filter(creation_date__date__gte=start_date, creation_date__date__lte=end_date)
             
-            if end_creation_date:
-                end_creation_date = datetime.datetime.strptime(end_creation_date, '%d/%m/%Y').strftime('%Y-%m-%d')
-                tickets = tickets.filter(creation_date__date__lte=end_creation_date)
-                open_tickets = open_tickets.filter(creation_date__date__lte=end_creation_date)
-            else:
-                end_creation_date = tzlocal.now()
-            
-            entry = seller.my_entries.filter(creation_date__date__gte=start_creation_date, creation_date__date__lte=end_creation_date)\
+            entry = seller.my_entries.filter(creation_date__date__gte=start_date, creation_date__date__lte=end_date)\
                 .aggregate(Sum('value'))['value__sum']
+
             self.entry += entry if entry else dec(0)
             
             self.open_tickets_count = open_tickets.count()
@@ -333,13 +310,12 @@ class ManagerResolver(BaseResolver):
                     'creation_date': ticket.creation_date.strftime("%d/%m/%Y %H:%M:%S")
                 })
         
-
             self.incoming_sum += self.incoming
             self.seller_comission_sum += self.seller_comission
             self.manager_comission_sum += self.manager_comission
             self.outgoing_sum += self.outgoing
-            self.bonus_of_won_sum += self.bonus_of_won
             self.open_outgoing_sum += self.open_outgoing
+            self.bonus_of_won_sum += self.bonus_of_won
             self.entry_sum += self.entry
             self.open_tickets_count_sum += self.open_tickets_count
 
@@ -349,24 +325,24 @@ class ManagerResolver(BaseResolver):
 
 
         return {
-            'manager': self.manager_username,
-            'tickets': self.open_tickets + self.tickets,
+            'username': self.username,
             'entry': self.entry_sum,
             'incoming': self.incoming_sum,
             'seller_comission':  self.seller_comission_sum,
             'manager_comission':  self.manager_comission_sum,
             'outgoing': self.outgoing_sum,
-            'bonus_of_won': self.bonus_of_won_sum,
-            'open_outgoing': self.open_outgoing_sum,
-            'open_tickets_count': self.open_tickets_count_sum,
             'outgoing_total': self.outgoing_total_sum,
+            'open_outgoing': self.open_outgoing_sum,
+            'bonus_of_won': self.bonus_of_won_sum,
+            'open_tickets_count': self.open_tickets_count_sum,
             'profit': self.profit_sum,
-            'profit_wost_case': self.profit_wost_case_sum
+            'profit_wost_case': self.profit_wost_case_sum,
+            'tickets': self.open_tickets + self.tickets,
         }
 
 
     def get_manager_owner_cashier(self):
-        ''' Method responsible for getting MANAGER details on MANAGER page '''
+        ''' GET_MANAGER_OWNER_CASHIER METHOD '''
 
         manager = self.get_manager()
         self.manager_username = manager.username
@@ -407,27 +383,15 @@ class ManagerResolver(BaseResolver):
             tickets = Ticket.objects.filter(payment__status=2, payment__who_paid__pk=seller.pk).exclude(Q(status__in=[0,5,6]) | Q(available=False))
             open_tickets = Ticket.objects.filter(status=0, payment__status=2, payment__who_paid__pk=seller.pk).exclude(available=False)
         
-            start_creation_date = self.kwargs.get('start_date') if self.kwargs.get('start_date') else None
-            end_creation_date = self.kwargs.get('end_date') if self.kwargs.get('end_date') else None
+            start_date = datetime.strptime(self.kwargs.get('start_date'), '%d/%m/%Y').strftime('%Y-%m-%d') if self.kwargs.get('start_date') else get_last_monay_as_date()
+            end_date = datetime.strptime(self.kwargs.get('end_date'), '%d/%m/%Y').strftime('%Y-%m-%d') if self.kwargs.get('end_date') else tzlocal.now()
 
-            if start_creation_date:
-                start_creation_date = datetime.datetime.strptime(start_creation_date, '%d/%m/%Y').strftime('%Y-%m-%d')
-                tickets = tickets.filter(creation_date__date__gte=start_creation_date)
-                open_tickets = open_tickets.filter(creation_date__date__gte=start_creation_date)
-            else:
-                last_monday = get_last_monay_as_date()
-                tickets = tickets.filter(creation_date__date__gte=last_monday)
-                open_tickets = open_tickets.filter(creation_date__date__gte=last_monday)
+            tickets = tickets.filter(creation_date__date__gte=start_date, creation_date__date__lte=end_date)
+            open_tickets = open_tickets.filter(creation_date__date__gte=start_date, creation_date__date__lte=end_date)
             
-            if end_creation_date:
-                end_creation_date = datetime.datetime.strptime(end_creation_date, '%d/%m/%Y').strftime('%Y-%m-%d')
-                tickets = tickets.filter(creation_date__date__lte=end_creation_date)
-                open_tickets = open_tickets.filter(creation_date__date__lte=end_creation_date)
-            else:
-                end_creation_date = tzlocal.now()
-            
-            entry = seller.my_entries.filter(creation_date__date__gte=start_creation_date, creation_date__date__lte=end_creation_date)\
+            entry = seller.my_entries.filter(creation_date__date__gte=start_date, creation_date__date__lte=end_date)\
                 .aggregate(Sum('value'))['value__sum']
+
             self.entry += entry if entry else dec(0)
             
             self.open_tickets_count = open_tickets.count()

@@ -1,6 +1,10 @@
 import graphene
 from graphene import String, Field, List, Int, Date
-from .types import SellerCashierType, SellersCashierType, ManagerCashierType, ManagerOwnerCashierType
+from .types import (
+    SellerCashierType, SellersCashierType, 
+    ManagerCashierType, ManagerOwnerCashierType,
+    ManagersCashierType
+)
 from core.models import Game
 from decimal import Decimal as dec
 import datetime
@@ -12,6 +16,11 @@ class CashierQuery(graphene.ObjectType):
     seller_cashier = Field(
         SellerCashierType, 
         seller_id=Int(required=True),
+        start_date=String(),
+        end_date=String()
+    )
+    sellers_cashier = Field(
+        SellersCashierType,
         start_date=String(),
         end_date=String()
     )
@@ -27,8 +36,8 @@ class CashierQuery(graphene.ObjectType):
         start_date=String(),
         end_date=String()
     )
-    sellers_cashier = Field(
-        SellersCashierType,
+    managers_cashier = Field(
+        ManagersCashierType,
         start_date=String(),
         end_date=String()
     )
@@ -37,14 +46,19 @@ class CashierQuery(graphene.ObjectType):
         resolver = SellerResolver(info.context, **kwargs)
         return resolver.get_seller_cashier()
 
+    def resolve_sellers_cashier(self, info, **kwargs):
+        resolver = SellerResolver(info.context, **kwargs)
+        return resolver.get_sellers_cashier()
+
     def resolve_manager_cashier(self, info, **kwargs):
         resolver = ManagerResolver(info.context, **kwargs)
         return resolver.get_manager_cashier()
+
+    def resolve_managers_cashier(self, info, **kwargs):
+        resolver = ManagerResolver(info.context, **kwargs)
+        return resolver.get_managers_cashier()
 
     def resolve_manager_owner_cashier(self, info, **kwargs):
         resolver = ManagerResolver(info.context, **kwargs)
         return resolver.get_manager_owner_cashier()
 
-    def resolve_sellers_cashier(self, info, **kwargs):
-        resolver = SellerResolver(info.context, **kwargs)
-        return resolver.get_sellers_cashier()

@@ -5,9 +5,9 @@ from ticket.models import Ticket
 from django.db.models import Q, Sum
 from datetime import  datetime
 from utils import timezone as tzlocal
-from .base import BaseResolver
+from schemas.base import BaseResolver
 from utils.utils import get_last_monay_as_date
-from .utils import get_last_closed_cashier_seller
+from .utils import get_last_closed_cashier_manager
 
 class ManagerResolver(BaseResolver):
     queryset = Manager.objects.filter(is_active=True)
@@ -18,21 +18,34 @@ class ManagerResolver(BaseResolver):
     def get_manager(self):
         return self.get_queryset().get(pk=self.kwargs.get('manager_id'))
 
+
     def get_managers_cashier(self):
         ''' GET MANAGERS CASHIER METHOD '''
-        self.incoming_total = dec(0)
-        self.seller_comission_total = dec(0)
-        self.manager_comission_total = dec(0)
-        self.outgoing_total = dec(0)
-        self.bonus_of_won_total = dec(0)
-        self.open_outgoing_total = dec(0)
-        self.entry_total = dec(0)
-        self.open_tickets_count_total = 0
+        self.incoming_sum_total = dec(0)
+        self.seller_comission_sum_total = dec(0)
+        self.manager_comission_sum_total = dec(0)
+        self.outgoing_sum_total = dec(0)
+        self.outgoing_total_sum_total = dec(0)
+        self.open_outgoing_sum_total = dec(0)
+        self.bonus_of_won_sum_total = dec(0)
+        self.entry_sum_total = dec(0)
+        self.open_tickets_count_sum_total = 0
         self.managers = []
 
         managers = self.get_managers()
+
         for manager in managers:
-            self.manager_username = manager.username
+            self.incoming_sum = dec(0)
+            self.seller_comission_sum = dec(0)
+            self.manager_comission_sum = dec(0)
+            self.outgoing_sum = dec(0)
+            self.outgoing_total_sum = dec(0)
+            self.open_outgoing_sum = dec(0)
+            self.bonus_of_won_sum = dec(0)
+            self.entry_sum = dec(0)
+            self.open_tickets_count_sum = 0
+
+            self.username = manager.username
             manager_comission = manager.comissions
             manager_key = {
                 1: manager_comission.simple,
@@ -44,26 +57,17 @@ class ManagerResolver(BaseResolver):
             }
 
             sellers = Seller.objects.filter(my_manager=manager, is_active=True)
-        
             if not sellers:
                 continue
-            
-            self.incoming_sum = dec(0)
-            self.seller_comission_sum = dec(0)
-            self.manager_comission_sum = dec(0)
-            self.outgoing_sum = dec(0)
-            self.bonus_of_won_sum = dec(0)
-            self.open_outgoing_sum = dec(0)
-            self.entry_sum = dec(0)
-            self.open_tickets_count_sum = 0
 
             for seller in sellers:
                 self.incoming = dec(0)
                 self.seller_comission = dec(0)
                 self.manager_comission = dec(0)
                 self.outgoing = dec(0)
-                self.bonus_of_won = dec(0)
+                self.outgoing_total = dec(0)
                 self.open_outgoing = dec(0)
+                self.bonus_of_won = dec(0)
                 self.entry = dec(0)
                 self.open_tickets_count = 0
 
@@ -132,62 +136,57 @@ class ManagerResolver(BaseResolver):
                 self.entry_sum += self.entry
                 self.open_tickets_count_sum += self.open_tickets_count
 
-            #Get Profit Results from Acumulated to the Manager
+            #Get Results from Acumulated to the Manager
             self.outgoing_total_sum = self.outgoing_sum + self.seller_comission_sum + self.manager_comission_sum
             self.profit_sum = self.incoming_sum - self.outgoing_total_sum
             self.profit_wost_case_sum = self.profit_sum - self.open_outgoing_sum
 
             #Create Manager Acumulated
             self.managers.append({
-                'manager': self.manager_username,
+                'username': self.username,
                 'entry': self.entry_sum,
                 'incoming': self.incoming_sum,
                 'seller_comission':  self.seller_comission_sum,
                 'manager_comission':  self.manager_comission_sum,
                 'outgoing': self.outgoing_sum,
-                'bonus_of_won': self.bonus_of_won_sum,
-                'open_outgoing': self.open_outgoing_sum,
-                'open_tickets_count': self.open_tickets_count_sum,
                 'outgoing_total': self.outgoing_total_sum,
+                'open_outgoing': self.open_outgoing_sum,
+                'bonus_of_won': self.bonus_of_won_sum,
+                'open_tickets_count': self.open_tickets_count_sum,
                 'profit': self.profit_sum,
                 'profit_wost_case': self.profit_wost_case_sum,
                 'last_closed_cashier': get_last_closed_cashier_manager(manager)
             })
 
             #Acumulate Managers to get General Total
-            self.incoming_total += self.incoming_sum
-            self.seller_comission_total += self.seller_comission_sum
-            self.manager_comission_total += self.manager_comission_sum
+            self.incoming_sum_total += self.incoming_sum
+            self.seller_comission_sum_total += self.seller_comission_sum
+            self.manager_comission_sum_total += self.manager_comission_sum
 
-            self.outgoing_sum_total =+ self.outgoing_sum
-            self.outgoing_total_sum_total =+ self.outgoing_total_sum
+            self.outgoing_sum_total += self.outgoing_sum
 
-            self.bonus_of_won_total += self.bonus_of_won_sum
-            self.open_outgoing_total += self.open_outgoing_sum
-            self.entry_total += self.entry_sum
-            self.open_tickets_count_total += self.open_tickets_count_sum
-        
-        # get profit form Final Acumulations
-        self.outgoing_total_final = self.outgoing_total_sum_total + self.seller_comission_total + self.manager_comission_total
-        self.profit_final = self.incoming_total - self.outgoing_total_final
-        self.profit_wost_case_final = self.profit_final - self.open_outgoing_total
+            self.open_outgoing_sum_total += self.open_outgoing_sum
+            self.bonus_of_won_sum_total += self.bonus_of_won_sum
+            self.entry_sum_total += self.entry_sum
+            self.open_tickets_count_sum_total += self.open_tickets_count_sum
+
+        #self.outgoing_total_sum_total = self.outgoing_sum_total + self.seller_comission_sum_total + self.manager_comission_sum_total
+        self.outgoing_total_sum_total = self.outgoing_sum_total + self.seller_comission_sum_total + self.manager_comission_sum_total
+        self.profit_sum_total = self.incoming_sum_total - self.outgoing_total_sum_total
+        self.profit_wost_case_sum_total = self.profit_sum_total - self.open_outgoing_sum_total
 
         return {
-            'entry_total': self.entry_total,
-            'incoming_total': self.incoming_total,
-            'seller_comission_total':  self.seller_comission_total,
-            'manager_comission_total':  self.manager_comission_total,
-
+            'entry_sum_total': self.entry_sum_total,
+            'incoming_sum_total': self.incoming_sum_total,
+            'seller_comission_sum_total':  self.seller_comission_sum_total,
+            'manager_comission_sum_total':  self.manager_comission_sum_total,
             'outgoing_sum_total': self.outgoing_sum_total,
             'outgoing_total_sum_total': self.outgoing_total_sum_total,
-
-            'bonus_of_won_total': self.bonus_of_won_total,
-            'open_outgoing_total': self.open_outgoing_total,
-            'open_tickets_count_total': self.open_tickets_count_total,
-
-            'profit_final': self.profit_final,
-            'profit_wost_case_final': self.profit_wost_case_final,
-
+            'bonus_of_won_sum_total': self.bonus_of_won_sum_total,
+            'open_outgoing_sum_total': self.open_outgoing_sum_total,
+            'open_tickets_count_sum_total': self.open_tickets_count_sum_total,
+            'profit_sum_total': self.profit_sum_total,
+            'profit_wost_case_sum_total': self.profit_wost_case_sum_total,
             'managers': self.managers
         }
 

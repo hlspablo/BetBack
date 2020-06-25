@@ -5,7 +5,7 @@ from ticket.models import Ticket
 from django.db.models import Q, Sum
 from datetime import datetime
 from utils import timezone as tzlocal
-from .base import BaseResolver
+from schemas.base import BaseResolver
 from utils.utils import get_last_monay_as_date
 from .utils import get_last_closed_cashier_seller
 

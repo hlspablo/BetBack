@@ -1,13 +1,11 @@
 import graphene
-from graphene import String, Field, List, Int, Date
+from graphene import Field
+from graphene.types import String, Int
 from .types import (
     SellerCashierType, SellersCashierType, 
     ManagerCashierType, ManagerOwnerCashierType,
     ManagersCashierType, GeneralCashierType
 )
-from core.models import Game
-from decimal import Decimal as dec
-import datetime
 from .resolvers.seller import SellerCashierResolver
 from .resolvers.manager import ManagerCashierResolver
 from .resolvers.general import GeneralCashierResolver

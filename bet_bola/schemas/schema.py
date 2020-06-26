@@ -1,8 +1,15 @@
 import graphene
-from .core.gql import CoreQuery
-from .cashier.gql import CashierQuery
+from .cashier.query import CashierQuery
+from .cashier.mutation import CashierMutation
 
-class Query(CoreQuery, CashierQuery):
+class Query(
+        CashierQuery
+    ):
     pass
 
-schema = graphene.Schema(query=Query)
+class Mutation(
+        CashierMutation
+    ):
+    pass
+
+schema = graphene.Schema(query=Query, mutation=Mutation)

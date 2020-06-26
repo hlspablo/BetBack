@@ -7,3 +7,9 @@ class BaseResolver():
 
     def get_queryset(self):
         return self.queryset
+
+
+class BaseMutation():
+    def __init__(self, request, **kwargs):
+        self.request = request
+        self.kwargs = kwargs

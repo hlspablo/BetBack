@@ -22,6 +22,7 @@ app_name = 'core'
 
 router = DefaultRouter()
 router.register(r'stores', StoreView)
+
 router.register(r'leagues', LeagueAdminView)
 router.register(r'locations', LocationView)
 router.register(r'cotations', CotationView)

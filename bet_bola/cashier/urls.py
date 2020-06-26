@@ -20,4 +20,4 @@ urlpatterns = [
 ]
 
 urlpatterns += router.urls
-
+# ALL DONE WITH GRAPHQL

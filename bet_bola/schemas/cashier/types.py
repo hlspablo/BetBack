@@ -87,3 +87,7 @@ class ManagersCashierType(ObjectType):
     profit_sum_total = Decimal()
     profit_wost_case_sum_total = Decimal()
     managers = List(ManagerCashierType)
+
+
+class GeneralCashierType(SellersCashierType):
+    managers_comission = Decimal()

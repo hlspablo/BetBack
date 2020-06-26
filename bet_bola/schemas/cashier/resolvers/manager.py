@@ -9,7 +9,7 @@ from schemas.base import BaseResolver
 from utils.utils import get_last_monay_as_date
 from .utils import get_last_closed_cashier_manager
 
-class ManagerResolver(BaseResolver):
+class ManagerCashierResolver(BaseResolver):
     queryset = Manager.objects.filter(is_active=True)
 
     def get_managers(self):

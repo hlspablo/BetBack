@@ -9,18 +9,19 @@ from schemas.base import BaseResolver
 from utils.utils import get_last_monay_as_date
 from .utils import get_last_closed_cashier_seller
 
-class SellerResolver(BaseResolver):
+class SellerCashierResolver(BaseResolver):
     queryset = Seller.objects.filter(is_active=True)
 
     def get_seller(self):
         return self.get_queryset().get(pk=self.kwargs.get('seller_id'))
 
-    def get_sellers_cashier(self):
+    def get_sellers_cashier(self, with_managers_comission=False):
         ''' GET SELLERS CASHIER METHOD '''
 
         self.entry_total = dec(0)
         self.incoming_total = dec(0)
         self.comission_total = dec(0)
+        self.managers_comission_total = dec(0)
         self.outgoing_sum_total = dec(0)
         self.outgoing_total_sum_total = dec(0)
         self.bonus_of_won_total = dec(0)
@@ -36,6 +37,7 @@ class SellerResolver(BaseResolver):
             self.username = seller.username
             self.incoming = dec(0)
             self.comission = dec(0)
+            self.managers_comission = dec(0)
             self.outgoing = dec(0)
             self.outgoing_total = dec(0)
             self.open_outgoing = dec(0)
@@ -69,6 +71,17 @@ class SellerResolver(BaseResolver):
                 6:seller_comission.sixth
             }
 
+            if with_managers_comission and seller.my_manager:
+                manager_comission = seller.my_manager.comissions
+                manager_key = {
+                    1: manager_comission.simple,
+                    2: manager_comission.double,
+                    3: manager_comission.triple,
+                    4: manager_comission.fourth,
+                    5: manager_comission.fifth,
+                    6: manager_comission.sixth
+                }
+
             # OPEN TICKETS
             for ticket in open_tickets:
                 self.incoming += ticket.bet_value
@@ -76,6 +89,8 @@ class SellerResolver(BaseResolver):
                 cotations_count = CotationCopy.objects.filter(active=True, ticket__pk=ticket.pk).count()
                 ticket_comission = seller_key.get(cotations_count, seller_comission.sixth_more) * ticket.bet_value / 100
                 self.comission += ticket_comission
+                if with_managers_comission:
+                    self.managers_comission += (manager_key.get(cotations_count, manager_comission.sixth_more) * ticket.bet_value / 100)
 
                 self.open_outgoing += ticket.reward.value
 
@@ -86,6 +101,8 @@ class SellerResolver(BaseResolver):
                 cotations_count = CotationCopy.objects.filter(active=True, ticket__pk=ticket.pk).count()
                 ticket_comission = seller_key.get(cotations_count, seller_comission.sixth_more) * ticket.bet_value / 100
                 self.comission += ticket_comission
+                if with_managers_comission:
+                    self.managers_comission += (manager_key.get(cotations_count, manager_comission.sixth_more) * ticket.bet_value / 100)
 
                 if ticket.status in [2,4]:
                     self.outgoing += ticket.reward.value                
@@ -94,8 +111,11 @@ class SellerResolver(BaseResolver):
                 if won_bonus_enabled:
                     bonus_by_won = ticket.won_bonus()
                     self.bonus_of_won += bonus_by_won
-
-            self.outgoing_total = self.outgoing + self.comission
+            
+            if with_managers_comission:
+                self.outgoing_total = self.outgoing + self.comission + self.managers_comission
+            else:
+                self.outgoing_total = self.outgoing + self.comission
             self.profit = self.incoming - self.outgoing_total
             self.profit_wost_case = self.profit - self.open_outgoing
 
@@ -119,6 +139,7 @@ class SellerResolver(BaseResolver):
             self.entry_total += self.entry
             self.incoming_total += self.incoming
             self.comission_total += self.comission
+            self.managers_comission_total += self.managers_comission
             self.outgoing_sum_total += self.outgoing
             self.outgoing_total_sum_total += self.outgoing_total
             self.open_tickets_count_total += self.open_tickets_count
@@ -128,7 +149,7 @@ class SellerResolver(BaseResolver):
             self.profit_wost_case_total += self.profit_wost_case
 
 
-        return {
+        return_value = {
             'entry_total': self.entry_total,
             'incoming_total': self.incoming_total,
             'comission_total': self.comission_total,
@@ -142,6 +163,10 @@ class SellerResolver(BaseResolver):
             'sellers': self.sellers
         }
 
+        if with_managers_comission:
+            return_value['managers_comission'] = self.managers_comission_total
+            return return_value
+        return return_value
 
     def get_seller_cashier(self):
         ''' GET_SELLER_CASHIER METHOD '''

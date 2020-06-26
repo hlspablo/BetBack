@@ -43,7 +43,9 @@ class GeneralCashier(APIView):
             'entry_lan': seller_serializer['entry_total'],
             'total_reward_out': seller_serializer[ 'out'],
             'total_seller_comission': seller_serializer['comission'],
+
             'total_manager_comission': manager_serializer['managers_comission'],
+            
             'total_won_bonus': seller_serializer['won_bonus'],
             'total_out': seller_serializer['total_out'] + manager_serializer['managers_comission'],
             'total_open_out': seller_serializer['open_out'],

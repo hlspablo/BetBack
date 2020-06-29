@@ -7,7 +7,7 @@ from datetime import  datetime
 from utils import timezone as tzlocal
 from schemas.base import BaseResolver
 from utils.utils import get_last_monay_as_date
-from .utils import get_last_closed_cashier_manager
+from .utils import get_last_closed_cashier_manager, get_last_closed_cashier_seller
 
 class ManagerCashierResolver(BaseResolver):
     queryset = Manager.objects.filter(is_active=True)
@@ -21,6 +21,7 @@ class ManagerCashierResolver(BaseResolver):
 
     def get_managers_cashier(self):
         ''' GET MANAGERS CASHIER METHOD '''
+
         self.incoming_sum_total = dec(0)
         self.seller_comission_sum_total = dec(0)
         self.manager_comission_sum_total = dec(0)
@@ -139,8 +140,6 @@ class ManagerCashierResolver(BaseResolver):
             #Get Results from Acumulated to the Manager
             self.outgoing_total_sum = self.outgoing_sum + self.seller_comission_sum
             self.balance = self.incoming_sum - self.outgoing_total_sum
-
-            print(manager.comissions.profit_comission)
 
             if manager.comission_based_on_profit:
                 if self.balance <= dec(0):
@@ -329,8 +328,18 @@ class ManagerCashierResolver(BaseResolver):
             self.entry_sum += self.entry
             self.open_tickets_count_sum += self.open_tickets_count
 
-        self.outgoing_total_sum = self.outgoing_sum + self.seller_comission_sum + self.manager_comission_sum
-        self.profit_sum = self.incoming_sum - self.outgoing_total_sum
+
+
+        self.outgoing_total_sum = self.outgoing_sum + self.seller_comission_sum
+        self.balance = self.incoming_sum - self.outgoing_total_sum
+
+        if manager.comission_based_on_profit:
+            if self.balance <= dec(0):
+                self.manager_comission_sum = dec(0)
+            else:
+                self.manager_comission_sum = dec(self.balance * (manager.comissions.profit_comission / 100))
+
+        self.profit_sum = self.balance - self.manager_comission_sum
         self.profit_wost_case_sum = self.profit_sum - self.open_outgoing_sum
 
 
@@ -345,6 +354,8 @@ class ManagerCashierResolver(BaseResolver):
             'open_outgoing': self.open_outgoing_sum,
             'bonus_of_won': self.bonus_of_won_sum,
             'open_tickets_count': self.open_tickets_count_sum,
+            'based_on_profit': manager.comission_based_on_profit,
+            'balance': self.balance,
             'profit': self.profit_sum,
             'profit_wost_case': self.profit_wost_case_sum,
             'tickets': self.open_tickets + self.tickets,
@@ -355,7 +366,6 @@ class ManagerCashierResolver(BaseResolver):
         ''' GET_MANAGER_OWNER_CASHIER METHOD '''
 
         manager = self.get_manager()
-        self.manager_username = manager.username
         manager_comission = manager.comissions
         manager_key = {
             1: manager_comission.simple,
@@ -380,7 +390,6 @@ class ManagerCashierResolver(BaseResolver):
         self.sellers = []
 
         for seller in sellers:
-            self.username = seller.username
             self.incoming = dec(0)
             self.seller_comission = dec(0)
             self.manager_comission = dec(0)
@@ -455,12 +464,12 @@ class ManagerCashierResolver(BaseResolver):
             self.entry_sum += self.entry
             self.open_tickets_count_sum += self.open_tickets_count
 
-            self.outgoing_total = self.outgoing + self.seller_comission + self.manager_comission
+            self.outgoing_total = self.outgoing + self.seller_comission
             self.profit = self.incoming - self.outgoing_total
             self.profit_wost_case = self.profit - self.open_outgoing
 
             self.sellers.append({
-                'username': self.username,
+                'username': seller.username,
                 'entry': self.entry,
                 'incoming': self.incoming,
                 'comission': self.seller_comission,
@@ -474,13 +483,21 @@ class ManagerCashierResolver(BaseResolver):
                 'last_closed_cashier': get_last_closed_cashier_seller(seller)
             })
 
-        self.outgoing_total_sum = self.outgoing_sum + self.seller_comission_sum + self.manager_comission_sum
-        self.profit_sum = self.incoming_sum - self.outgoing_total_sum
+        self.outgoing_total_sum = self.outgoing_sum + self.seller_comission_sum
+        self.balance = self.incoming_sum - self.outgoing_total_sum
+
+        if manager.comission_based_on_profit:
+            if self.balance <= dec(0):
+                self.manager_comission_sum = dec(0)
+            else:
+                self.manager_comission_sum = dec(self.balance * (manager.comissions.profit_comission / 100))
+
+        self.profit_sum = self.balance - self.manager_comission_sum
         self.profit_wost_case_sum = self.profit_sum - self.open_outgoing_sum
 
 
         return {
-            'username': self.username,
+            'username': manager.username,
             'entry': self.entry_sum,
             'incoming': self.incoming_sum,
             'seller_comission':  self.seller_comission_sum,
@@ -490,6 +507,8 @@ class ManagerCashierResolver(BaseResolver):
             'open_outgoing': self.open_outgoing_sum,
             'bonus_of_won': self.bonus_of_won_sum,
             'open_tickets_count': self.open_tickets_count_sum,
+            'based_on_profit': manager.comission_based_on_profit,
+            'balance': self.balance,
             'profit': self.profit_sum,
             'profit_wost_case': self.profit_wost_case_sum,
             'sellers': self.sellers

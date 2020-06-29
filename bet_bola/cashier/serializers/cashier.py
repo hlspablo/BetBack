@@ -171,10 +171,7 @@ class ManagerCashierSerializer(serializers.HyperlinkedModelSerializer):
             # defining total out
             self.total_out_init = self.out_value_init + self.seller_comission_init + self.manager_comission_init
 
-
-
-
-            
+       
     def get_entry(self, user):
         return self.entry_value_init
 

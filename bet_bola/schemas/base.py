@@ -6,7 +6,7 @@ class BaseResolver():
         self.kwargs = kwargs
 
     def get_queryset(self):
-        return self.queryset
+        return self.queryset.all()
 
 
 class BaseMutation():

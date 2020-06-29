@@ -1,7 +1,7 @@
 from graphene_django import DjangoObjectType
 from core.models import Game
 from graphene import ObjectType
-from graphene.types import String, Decimal, Float, Int, DateTime, Field, List
+from graphene.types import String, Decimal, Float, Int, DateTime, Field, List, Boolean
 
 class TicketType(ObjectType):
     ticket_id = String()
@@ -50,11 +50,13 @@ class ManagerCashierType(ObjectType):
     incoming = Decimal()
     seller_comission = Decimal()
     manager_comission = Decimal()
+    based_on_profit = Boolean()
     outgoing = Decimal()
     outgoing_total = Decimal()
     open_outgoing = Decimal()
     bonus_of_won = Decimal()
     open_tickets_count = Int()
+    balance = Decimal()
     profit = Decimal()
     profit_wost_case = Decimal()
     tickets = List(TicketType)

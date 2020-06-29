@@ -65,7 +65,7 @@ class ManagerCashierResolver(BaseResolver):
                 self.seller_comission = dec(0)
                 self.manager_comission = dec(0)
                 self.outgoing = dec(0)
-                self.outgoing_total = dec(0)
+                #self.outgoing_total = dec(0)
                 self.open_outgoing = dec(0)
                 self.bonus_of_won = dec(0)
                 self.entry = dec(0)
@@ -137,8 +137,18 @@ class ManagerCashierResolver(BaseResolver):
                 self.open_tickets_count_sum += self.open_tickets_count
 
             #Get Results from Acumulated to the Manager
-            self.outgoing_total_sum = self.outgoing_sum + self.seller_comission_sum + self.manager_comission_sum
-            self.profit_sum = self.incoming_sum - self.outgoing_total_sum
+            self.outgoing_total_sum = self.outgoing_sum + self.seller_comission_sum
+            self.balance = self.incoming_sum - self.outgoing_total_sum
+
+            print(manager.comissions.profit_comission)
+
+            if manager.comission_based_on_profit:
+                if self.balance <= dec(0):
+                    self.manager_comission_sum = dec(0)
+                else:
+                    self.manager_comission_sum = dec(self.balance * (manager.comissions.profit_comission / 100))
+
+            self.profit_sum = self.balance - self.manager_comission_sum
             self.profit_wost_case_sum = self.profit_sum - self.open_outgoing_sum
 
             #Create Manager Acumulated
@@ -148,11 +158,13 @@ class ManagerCashierResolver(BaseResolver):
                 'incoming': self.incoming_sum,
                 'seller_comission':  self.seller_comission_sum,
                 'manager_comission':  self.manager_comission_sum,
+                'based_on_profit': manager.comission_based_on_profit,
                 'outgoing': self.outgoing_sum,
                 'outgoing_total': self.outgoing_total_sum,
                 'open_outgoing': self.open_outgoing_sum,
                 'bonus_of_won': self.bonus_of_won_sum,
                 'open_tickets_count': self.open_tickets_count_sum,
+                'balance': self.balance,
                 'profit': self.profit_sum,
                 'profit_wost_case': self.profit_wost_case_sum,
                 'last_closed_cashier': get_last_closed_cashier_manager(manager)
@@ -170,7 +182,6 @@ class ManagerCashierResolver(BaseResolver):
             self.entry_sum_total += self.entry_sum
             self.open_tickets_count_sum_total += self.open_tickets_count_sum
 
-        #self.outgoing_total_sum_total = self.outgoing_sum_total + self.seller_comission_sum_total + self.manager_comission_sum_total
         self.outgoing_total_sum_total = self.outgoing_sum_total + self.seller_comission_sum_total + self.manager_comission_sum_total
         self.profit_sum_total = self.incoming_sum_total - self.outgoing_total_sum_total
         self.profit_wost_case_sum_total = self.profit_sum_total - self.open_outgoing_sum_total

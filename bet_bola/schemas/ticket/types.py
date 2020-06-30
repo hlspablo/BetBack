@@ -3,6 +3,16 @@ from ticket.models import Ticket
 from graphene import ObjectType, relay
 from graphene.types import String, Decimal, Float, Int, DateTime, Field, List, Boolean
 
+
+class TicketCotationsType(ObjectType):
+    game = String()
+    data = String()
+    market = String()
+    name = String()
+    price = String()
+    status = String()
+    active = Boolean()
+
 class TicketTypeListNode(DjangoObjectType):
     real_id = String()
     owner = String()

@@ -1,20 +1,22 @@
 import graphene
 from graphene import Field
-from graphene.types import String, Int, List, Decimal
+from graphene.types import String, Int, List, Decimal, Boolean
 from .types import (
-    TicketTypeListNode
+    TicketTypeListNode,
+    TicketCotationsType
 )
-from .resolvers.ticket import TicketResolver
-from django_filters import FilterSet
-from ticket.models import Ticket
-from django.db.models import Q
-from graphene import relay
+from .resolvers.ticket import TicketResolver, get_ticket_cotations
+
 from graphene_django.filter import DjangoFilterConnectionField
 
 
-
 class TicketQuery(graphene.ObjectType):
+    get_ticket_cotations = List(TicketCotationsType, ticket_id=String(required=True), active=Boolean())
     get_tickets = DjangoFilterConnectionField(TicketTypeListNode)
+
+    def resolve_get_ticket_cotations(self, info, **kwargs):
+        return get_ticket_cotations(**kwargs)
+
 
     def resolve_get_tickets(self, info, **kwargs):
         resolver = TicketResolver(info.context, **kwargs)

@@ -4,6 +4,7 @@ from graphene import ObjectType, relay
 from graphene.types import String, Decimal, Float, Int, DateTime, Field, List, Boolean
 
 class TicketTypeListNode(DjangoObjectType):
+    real_id = String()
     owner = String()
     creator = String()
     reward = Decimal()
@@ -13,6 +14,9 @@ class TicketTypeListNode(DjangoObjectType):
     client_cellphone = String()
     payment_date = String()
     cotation_count = Int()
+    
+    def resolve_real_id(self, info):
+        return self.id
 
     def resolve_cotation_count(self, info):
         return self.cotation_count()
@@ -42,7 +46,7 @@ class TicketTypeListNode(DjangoObjectType):
         return self.payment.get_status_display()
 
     class Meta:
-        model = Ticket 
+        model = Ticket
         interfaces = (relay.Node, )
         filter_fields = {
             'ticket_id': ['icontains'],
@@ -51,6 +55,6 @@ class TicketTypeListNode(DjangoObjectType):
             'owner__first_name': ['icontains'],
             'creator__username': ['icontains'],
             'payment__who_paid__username': ['icontains'],
-            'payment__date__date': 'exact',
-            'creation_date__date': 'exact'
+            'creation_date': ['date__exact'],
+            'payment__date': ['exact']
         }

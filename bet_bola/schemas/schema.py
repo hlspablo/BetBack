@@ -2,9 +2,11 @@ import graphene
 from .cashier.query import CashierQuery
 from .cashier.mutation import CashierMutation
 from .auth.mutation import AuthMutation
+from .ticket.query import TicketQuery
 
 class Query(
-        CashierQuery
+        CashierQuery,
+        TicketQuery
     ):
     pass
 

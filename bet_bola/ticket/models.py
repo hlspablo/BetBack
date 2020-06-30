@@ -43,6 +43,10 @@ class Ticket(models.Model):
     store = models.ForeignKey('core.Store', related_name='my_tickets', verbose_name='Banca', on_delete=models.CASCADE)
     available = models.BooleanField(default=True, verbose_name='Visível?')
     
+    def cotation_count(self):
+        from core.models import CotationCopy
+        return CotationCopy.objects.filter(active=True, ticket=self).count()
+        
     def won_bonus(self):
         if self.status in [2,4] and self.store.my_configuration.bonus_won_ticket:
             return round(Decimal(self.reward.value * self.store.my_configuration.bonus_by_won_ticket / 100),2)                

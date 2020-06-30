@@ -1,9 +1,9 @@
 from graphene_django import DjangoObjectType
 from ticket.models import Ticket
-from graphene import ObjectType
+from graphene import ObjectType, relay
 from graphene.types import String, Decimal, Float, Int, DateTime, Field, List, Boolean
 
-class TicketTypeList(DjangoObjectType):
+class TicketTypeListNode(DjangoObjectType):
     owner = String()
     creator = String()
     reward = Decimal()
@@ -43,3 +43,7 @@ class TicketTypeList(DjangoObjectType):
 
     class Meta:
         model = Ticket 
+        interfaces = (relay.Node, )
+        filter_fields = {
+            'bet_value': ['lte']
+        }

@@ -45,5 +45,12 @@ class TicketTypeListNode(DjangoObjectType):
         model = Ticket 
         interfaces = (relay.Node, )
         filter_fields = {
-            'bet_value': ['lte']
+            'ticket_id': ['icontains'],
+            'available': ['exact'],
+            'status': ['exact'],
+            'owner__first_name': ['icontains'],
+            'creator__username': ['icontains'],
+            'payment__who_paid__username': ['icontains'],
+            'payment__date__date': 'exact',
+            'creation_date__date': 'exact'
         }

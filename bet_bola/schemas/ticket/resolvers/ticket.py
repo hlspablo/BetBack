@@ -4,7 +4,7 @@ from ticket.models import Ticket
 
 
 class TicketResolver(BaseResolver):
-    queryset = Ticket.objects.filter(available=True)
+    queryset = Ticket.objects.all()
 
     def get_tickets(self):
         return self.get_queryset()

@@ -1,7 +1,9 @@
 from graphene_django import DjangoObjectType
-from core.models import Game
 from graphene import ObjectType
 from graphene.types import String, Decimal, Float, Int, DateTime, Field, List, Boolean
 
-class D(ObjectType):
-    pass
+class LocationStoreType(ObjectType):
+    name = String()
+    my_modifications__priority = Int()
+    my_modifications__available = Boolean()
+

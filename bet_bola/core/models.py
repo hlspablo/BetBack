@@ -232,22 +232,6 @@ class Location(models.Model):
         verbose_name_plural = 'Países'
 
 
-class Market(models.Model):
-    name = models.CharField(max_length=100, verbose_name='Mercado', unique=True)
-    available = models.BooleanField(default=True, verbose_name="Disponibilidade")
-    
-    def __str__(self):
-        return str(self.name)
-    
-    def natural_key(self):
-        return self.name
-
-    class Meta:
-        ordering = ['-pk']
-        verbose_name = 'Mercado'
-        verbose_name_plural = 'Mercados'
-
-
 class LocationModified(models.Model):
     location = models.ForeignKey('core.Location', related_name='my_modifications', on_delete=models.CASCADE, verbose_name='País Alterado')
     store = models.ForeignKey('core.Store', related_name='my_locations_modifications', on_delete=models.CASCADE, verbose_name='Banca')
@@ -264,6 +248,24 @@ class LocationModified(models.Model):
         ordering = ('-pk',)
         verbose_name = 'Países Banca'
         verbose_name_plural = 'Países da Banca'
+
+
+class Market(models.Model):
+    name = models.CharField(max_length=100, verbose_name='Mercado', unique=True)
+    available = models.BooleanField(default=True, verbose_name="Disponibilidade")
+    
+    def __str__(self):
+        return str(self.name)
+    
+    def natural_key(self):
+        return self.name
+
+    class Meta:
+        ordering = ['-pk']
+        verbose_name = 'Mercado'
+        verbose_name_plural = 'Mercados'
+
+
 
 
 class GameModified(models.Model):

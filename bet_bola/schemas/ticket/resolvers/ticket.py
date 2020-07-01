@@ -3,7 +3,7 @@ from decimal import Decimal as dec
 from ticket.models import Ticket
 from core.models import CotationCopy
 
-def get_ticket_cotations(**kwargs):
+def get_ticket_cotations(request, **kwargs):
     ticket_id = kwargs.get('ticket_id')
     active = kwargs.get('active')
     cotations_list = []

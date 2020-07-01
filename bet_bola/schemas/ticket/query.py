@@ -15,7 +15,7 @@ class TicketQuery(graphene.ObjectType):
     get_tickets = DjangoFilterConnectionField(TicketTypeListNode)
 
     def resolve_get_ticket_cotations(self, info, **kwargs):
-        return get_ticket_cotations(**kwargs)
+        return get_ticket_cotations(info, **kwargs)
 
 
     def resolve_get_tickets(self, info, **kwargs):

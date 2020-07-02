@@ -83,6 +83,24 @@ class Game(models.Model):
         return self.name
 
 
+class GameModified(models.Model):
+    game = models.ForeignKey('core.Game', related_name='my_modifications', on_delete=models.CASCADE, verbose_name='Jogo Alterado')
+    store = models.ForeignKey('core.Store', related_name='my_games_modifications', on_delete=models.CASCADE, verbose_name='Banca')    
+    available = models.BooleanField(default=True, verbose_name="Visível?")
+    is_in_zone = models.BooleanField(default=False, verbose_name='Zona de Destaque?')
+
+    def __repr__(self):
+        return "{}, {}, {}".format(self.game, self.store, self.available)
+    
+    def __str__(self):
+        return self.__repr__()
+
+    class Meta:
+        ordering = ('-pk',)
+        verbose_name = 'Países Banca'
+        verbose_name_plural = 'Países da Banca'
+
+
 class CotationModified(models.Model):
     cotation = models.ForeignKey('Cotation', related_name='my_modify', on_delete=models.CASCADE, verbose_name='Cota Original Modificada')
     store = models.ForeignKey('Store', related_name='my_modify', on_delete=models.CASCADE, verbose_name='Banca')
@@ -268,19 +286,4 @@ class Market(models.Model):
 
 
 
-class GameModified(models.Model):
-    game = models.ForeignKey('core.Game', related_name='my_modifications', on_delete=models.CASCADE, verbose_name='Jogo Alterado')
-    store = models.ForeignKey('core.Store', related_name='my_games_modifications', on_delete=models.CASCADE, verbose_name='Banca')    
-    available = models.BooleanField(default=True, verbose_name="Visível?")
-    is_in_zone = models.BooleanField(default=False, verbose_name='Zona de Destaque?')
 
-    def __repr__(self):
-        return "{}, {}, {}".format(self.game, self.store, self.available)
-    
-    def __str__(self):
-        return self.__repr__()
-
-    class Meta:
-        ordering = ('-pk',)
-        verbose_name = 'Países Banca'
-        verbose_name_plural = 'Países da Banca'

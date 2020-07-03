@@ -1,6 +1,7 @@
 import graphene
 from graphene import  Field
-#from .mutationTypes import CloseSellerCashierType, CloseManagerCashierType
+from .mutationTypes import CancelTicketType, DisableTicketType
 
-class CashierMutation(graphene.ObjectType):
-    #close_seller_cashier = CloseSellerCashierType.Field() TODO
+class TicketMutation(graphene.ObjectType):
+    cancel_ticket = CancelTicketType.Field()
+    disable_ticket = DisableTicketType.Field()

@@ -1,15 +1,27 @@
 import graphene
 from graphene import Field
-from graphene.types import Boolean, Int, String
-#from .mutations.seller import SellerMutations
+from graphene.types import Boolean, Int, String, List
+from .mutations.ticket import cancel_ticket_mutation, disable_ticket_mutation
 
-class TodoType(graphene.Mutation):
-    #success = Boolean() 
+class DisableTicketType(graphene.Mutation):
+    success = Boolean()
+    errors = List(String)
 
     class Arguments:
-        # close_all = Boolean()
-        # manager_id = Int()
+        ticket_id = String()
+        disable = Boolean(required=True)
 
     def mutate(self, info, **kwargs):
-        pass
+        return disable_ticket_mutation(info.context, **kwargs)
+
+
+class CancelTicketType(graphene.Mutation):
+    success = Boolean()
+    errors = List(String)
+
+    class Arguments:
+        ticket_id = String()
+
+    def mutate(self, info, **kwargs):
+        return cancel_ticket_mutation(info.context, **kwargs)
 

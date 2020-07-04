@@ -16,3 +16,11 @@ class GameStoreType(ObjectType):
     my_modifications__available = Boolean()
     my_modifications__is_in_zone = Boolean()
 
+
+class MarketStoreType(ObjectType):
+    name = String()
+    my_modifications__reduction_percentual = Int()
+    my_modifications__modification_available = Boolean()
+    my_modifications__available = Boolean()
+
+

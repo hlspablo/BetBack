@@ -1,8 +1,30 @@
 import graphene
 from graphene import Field
-from graphene.types import Boolean, Int, String
+from graphene.types import Boolean, Int, String, List, Decimal
 from .mutations.seller import SellerMutations
 from .mutations.manager import ManagerMutations
+from .mutations.entry import add_entry, delete_entry
+
+class DeleteEntryType(graphene.Mutation):
+    success = Boolean()
+    errors = List(String)
+
+    class Arguments:
+        entry_id = Int(required=True)
+
+    def mutate(self, info, **kwargs):
+        return delete_entry(info.context, **kwargs)
+
+class AddEntryType(graphene.Mutation):
+    success = Boolean()
+    errors = List(String)
+
+    class Arguments:
+        seller_id = Int(required=True)
+        value = Decimal(required=True)
+
+    def mutate(self, info, **kwargs):
+        return add_entry(info.context, **kwargs)
 
 class CloseManagerCashierType(graphene.Mutation):
     success = Boolean() 

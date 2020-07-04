@@ -1,7 +1,22 @@
 from graphene_django import DjangoObjectType
 from core.models import Game
+from utils.models import Entry
 from graphene import ObjectType
 from graphene.types import String, Decimal, Float, Int, DateTime, Field, List, Boolean
+
+
+class EntrySingleType(DjangoObjectType):
+    user = String()
+    
+    def resolve_user(self, info):
+        return self.user.username
+
+    class Meta:
+        model = Entry
+
+class EntryTypeTotal(ObjectType):
+    entry_total = Decimal()
+    entries = List(EntrySingleType)
 
 class TicketType(ObjectType):
     ticket_id = String()

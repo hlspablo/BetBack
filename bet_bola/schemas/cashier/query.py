@@ -4,13 +4,16 @@ from graphene.types import String, Int
 from .types import (
     SellerCashierType, SellersCashierType, 
     ManagerCashierType, ManagerOwnerCashierType,
-    ManagersCashierType, GeneralCashierType
+    ManagersCashierType, GeneralCashierType,
+    EntryTypeTotal
 )
 from .resolvers.seller import SellerCashierResolver
 from .resolvers.manager import ManagerCashierResolver
 from .resolvers.general import GeneralCashierResolver
+from .resolvers.entry import get_entries
 
 class CashierQuery(graphene.ObjectType):
+    get_entries = Field(EntryTypeTotal, seller_username=String(), start_date=String(), end_date=String())
     seller_cashier = Field(
         SellerCashierType, seller_id=Int(required=True), start_date=String(), end_date=String()
     )
@@ -29,6 +32,9 @@ class CashierQuery(graphene.ObjectType):
     general_cashier = Field(
         GeneralCashierType, start_date=String(), end_date=String()
     )
+
+    def resolve_get_entries(self, info, **kwargs):
+        return get_entries(info.context, **kwargs)
 
     def resolve_seller_cashier(self, info, **kwargs):
         resolver = SellerCashierResolver(info.context, **kwargs)

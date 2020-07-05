@@ -1,5 +1,6 @@
 from user.models import Seller, Manager
 from django.db import  transaction
+from utils.models import SellerComission
 
 @transaction.atomic
 def remove_seller(request, **kwargs):
@@ -90,6 +91,12 @@ def create_seller(request, **kwargs):
     if manager_id:
         seller.my_manager = Manager.objects.get(pk=manager_id)
         seller.save()
+
+
+    SellerComission.objects.create(
+        seller_related=seller,
+        store=seller.my_store
+    )
 
     return {
         'success': True

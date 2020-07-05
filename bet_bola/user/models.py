@@ -194,7 +194,7 @@ class Manager(CustomUser):
         self.user_type = 3
         define_password(self)
         super().save()
-        manager.define_default_permissions(self)   
+        manager.define_default_permissions(self)
 
     class Meta:
         ordering = ('-pk',)

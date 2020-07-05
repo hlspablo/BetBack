@@ -1,5 +1,6 @@
 from user.models import Seller, Manager
 from django.db import  transaction
+from utils.models import ManagerComission
 
 @transaction.atomic
 def remove_manager(request, **kwargs):
@@ -94,6 +95,11 @@ def create_manager(request, **kwargs):
         cpf=cpf,
         address=address,
         my_store=request.user.my_store
+    )
+
+    ManagerComission.objects.create(
+	    manager_related=manager,
+	    store=manager.my_store
     )
 
     return {

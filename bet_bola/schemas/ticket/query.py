@@ -1,13 +1,12 @@
 import graphene
 from graphene import Field
 from graphene.types import String, Int, List, Decimal, Boolean
+from graphene_django.filter import DjangoFilterConnectionField
 from .types import (
     TicketTypeListNode,
     TicketCotationsType
 )
 from .resolvers.ticket import TicketResolver, get_ticket_cotations
-
-from graphene_django.filter import DjangoFilterConnectionField
 
 
 class TicketQuery(graphene.ObjectType):

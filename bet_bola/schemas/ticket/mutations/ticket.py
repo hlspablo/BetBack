@@ -6,7 +6,7 @@ from utils.utils import tzlocal
 from ticket.models import Ticket
 
 
-@transaction.atomic()
+@transaction.atomic
 def cancel_ticket_mutation(request, **kwargs):
     # Verify if the user is from the same store
     # Verify is the seller or manager has cancel permission
@@ -44,7 +44,7 @@ def cancel_ticket_mutation(request, **kwargs):
         'success':True
     }
 
-@transaction.atomic()
+@transaction.atomic
 def disable_ticket_mutation(request, **kwargs):
     ticket_id = kwargs.get('ticket_id')
     ticket = Ticket.objects.get(ticket_id=ticket_id)

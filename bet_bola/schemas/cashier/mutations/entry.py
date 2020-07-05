@@ -2,7 +2,7 @@ from utils.models import Entry
 from user.models import Seller
 from django.db import transaction
 
-@transaction.atomic()
+@transaction.atomic
 def add_entry(request, **kwargs):
     seller_id = kwargs.get('seller_id')
     value = kwargs.get('value')
@@ -18,7 +18,7 @@ def add_entry(request, **kwargs):
         'success': True
     }
 
-@transaction.atomic()
+@transaction.atomic
 def delete_entry(request, **kwargs):
     entry_id = kwargs.get('entry_id')
 

@@ -1,8 +1,25 @@
 from graphene_django import DjangoObjectType
-from user.models import Seller
+from user.models import Seller, Manager
 from graphene import ObjectType
 from graphene import relay
 from graphene.types import String, Decimal, Float, Int, DateTime, Field, List, Boolean
+
+class ManagersNodeType(DjangoObjectType):
+    real_id = Int()
+
+    def resolve_real_id(self, info):
+        return self.pk
+    
+    class Meta:
+        model = Manager
+        interfaces = (relay.Node, )
+        filter_fields = []
+        filter_fields = {
+            'first_name': ['icontains'],
+            'username': ['icontains'],
+            'email': ['icontains']
+        }
+
 
 class SellersNodeType(DjangoObjectType):
     real_id = Int()
